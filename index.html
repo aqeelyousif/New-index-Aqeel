@@ -338,3 +338,20 @@
 </body>
 </html>
 <script src="script.js"></script>
+<script>
+function checkAdminPassword() {
+    let isAuth = localStorage.getItem('my_secure_admin') === 'true';
+    if (!isAuth) {
+        let pass = prompt("أدخل الرمز السري الخاص بك:");
+        if (pass === '427002') { // تقدر تغير الرقم '1999' إلى أي رمز سري تعجبك
+            localStorage.setItem('my_secure_admin', 'true');
+            alert('أهلاً بك يا دكتور، تم فتح لوحة التحكم بنجاح!');
+            toggleAdminPanel();
+        } else {
+            alert('الرمز خطأ! الوصول مرفوض.');
+        }
+    } else {
+        toggleAdminPanel();
+    }
+}
+</script>

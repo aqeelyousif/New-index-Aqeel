@@ -1,1 +1,335 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>موقع عقيل | تتبع الإنجاز</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc; }
+        .progress-bar { transition: width 0.3s ease; }
+    </style>
+</head>
+<body class="text-slate-800 pb-28">
+
+    <!-- Header / Navigation -->
+    <header class="bg-white shadow-sm p-4 flex justify-between items-center sticky top-0 z-50 border-b border-slate-100">
+        <div class="text-xl font-bold text-blue-600 flex items-center gap-2">
+            <i class="fa-solid fa-stethoscope"></i> عقيل
+        </div>
+        <nav class="flex gap-4 text-sm font-semibold text-gray-500 overflow-x-auto whitespace-nowrap">
+            <a href="#" class="hover:text-blue-600">الرئيسية</a>
+            <a href="#" class="hover:text-blue-600">ملخصات طبية</a>
+            <a href="#" class="hover:text-blue-600">مشاريع</a>
+            <a href="#" class="text-blue-600 border-b-2 border-blue-600 pb-1">الإنجاز</a>
+        </nav>
+        <button onclick="toggleAdminPanel()" class="bg-slate-800 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-md flex items-center gap-1">
+            <i class="fa-solid fa-gear"></i> لوحة التحكم
+        </button>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-2xl mx-auto mt-6 p-4">
+        
+        <!-- Admin Management Panel (Hidden by default) -->
+        <div id="admin-panel" class="hidden bg-slate-900 text-white rounded-2xl p-5 mb-6 shadow-xl border border-slate-700">
+            <div class="flex justify-between items-center mb-4 border-b border-slate-700 pb-2">
+                <h3 class="font-bold text-base text-blue-400"><i class="fa-solid fa-wand-magic-sparkles"></i> إضافة وتعديل السشنات</h3>
+                <button onclick="toggleAdminPanel()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            
+            <div class="space-y-3 text-sm">
+                <div>
+                    <label class="block text-xs text-slate-300 mb-1">اختر الموديول:</label>
+                    <select id="admin-mod-id" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-white">
+                        <option value="msk">MSK</option>
+                        <option value="cvs">CVS</option>
+                        <option value="mnr">M&R</option>
+                        <option value="mod">MOD</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-300 mb-1">اسم السشن (مثال: Session 7):</label>
+                    <input type="text" id="admin-session-name" placeholder="Session X" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-white">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-300 mb-1">نوع السشن أو عدد المحاضرات/الأجزاء (رقم من 1 إلى 5، أو اكتب 0 إذا كان مربع اختيار مفرد):</label>
+                    <input type="number" id="admin-session-max" value="2" min="0" max="5" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-white">
+                </div>
+                <button onclick="addNewSession()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg transition-colors">
+                    إضافة السشن فوراً
+                </button>
+                <button onclick="resetToDefault()" class="w-full bg-red-600/30 hover:bg-red-600/50 text-red-300 text-xs py-1.5 rounded-lg transition-colors mt-2">
+                    إعادة ضبط الإعدادات الافتراضية
+                </button>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="flex justify-between bg-white rounded-xl shadow-sm mb-6 p-1">
+            <button class="flex-1 py-2 text-center text-sm font-bold rounded-lg text-gray-500">الفعاليات</button>
+            <button class="flex-1 py-2 text-center text-sm font-bold rounded-lg text-gray-500">الفورمات</button>
+            <button class="flex-1 py-2 text-center text-sm font-bold rounded-lg bg-[#0f2a4a] text-white shadow">الامتحانات</button>
+            <button class="flex-1 py-2 text-center text-sm font-bold rounded-lg text-gray-500">الروابط</button>
+        </div>
+
+        <!-- Tracker Card -->
+        <div class="bg-white rounded-2xl shadow-sm p-5 mb-6 border border-gray-100">
+            <div class="flex justify-between items-center mb-4">
+                <span class="text-blue-500"><i class="fa-solid fa-book-medical"></i></span>
+                <h2 class="text-lg font-bold text-slate-700">Summative Exam 📚</h2>
+                <span class="text-gray-400 text-sm"><i class="fa-regular fa-calendar"></i> 12/11/2026</span>
+            </div>
+
+            <!-- Total Progress -->
+            <div class="bg-slate-50 p-4 rounded-xl mb-6">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="font-bold text-slate-700" id="total-text">إنجازك الكلي: 0%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                    <div id="total-progress" class="bg-blue-500 h-2.5 rounded-full progress-bar" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Modules Accordion -->
+            <div id="modules-container" class="space-y-3">
+                <!-- Modules will be injected by JS -->
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Sticky Save Button -->
+    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 shadow-lg z-50">
+        <div class="max-w-2xl mx-auto flex flex-col items-center gap-2">
+            <span id="save-status" class="text-xs text-gray-500 font-semibold">تقدمك محفوظ</span>
+            <button onclick="saveProgress()" class="w-full bg-slate-400 hover:bg-slate-500 text-white font-bold py-3 rounded-xl flex justify-center items-center gap-2 transition-colors">
+                <i class="fa-solid fa-floppy-disk"></i> حفظ تقدمي
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Default Modules Structure
+        const defaultModules = [
+            {
+                id: 'msk',
+                name: 'MSK',
+                sessions: [
+                    { id: 'msk_s1', name: 'Session 1', max: 2 },
+                    { id: 'msk_s2', name: 'Session 2', max: 3 },
+                    { id: 'msk_s3', name: 'Session 3', max: 2 },
+                    { id: 'msk_s4', name: 'Session 4', max: 3 },
+                    { id: 'msk_s5', name: 'Session 5', max: 1 }
+                ]
+            },
+            {
+                id: 'cvs',
+                name: 'CVS',
+                sessions: [
+                    { id: 'cvs_s1', name: 'Session 1', isCheckbox: true },
+                    { id: 'cvs_s2', name: 'Session 2', max: 1 },
+                    { id: 'cvs_s3', name: 'Session 3', max: 2 },
+                    { id: 'cvs_s4', name: 'Session 4', max: 2 },
+                    { id: 'cvs_s5', name: 'Session 5', max: 2 }
+                ]
+            },
+            {
+                id: 'mnr',
+                name: 'M&R',
+                sessions: [
+                    { id: 'mnr_s1', name: 'Session 1', max: 2 },
+                    { id: 'mnr_s2', name: 'Session 2', max: 2 },
+                    { id: 'mnr_s3', name: 'Session 3', max: 2 },
+                    { id: 'mnr_s4', name: 'Session 4', max: 2 },
+                    { id: 'mnr_s5', name: 'Session 5', max: 2 },
+                    { id: 'mnr_s6', name: 'Session 6', max: 2 }
+                ]
+            },
+            {
+                id: 'mod',
+                name: 'MOD',
+                sessions: [
+                    { id: 'mod_s1', name: 'Session 1', max: 3 },
+                    { id: 'mod_s2', name: 'Session 2', isCheckbox: true },
+                    { id: 'mod_s3', name: 'Session 3', isCheckbox: true },
+                    { id: 'mod_s4', name: 'Session 4', isCheckbox: true },
+                    { id: 'mod_s5', name: 'Session 5', isCheckbox: true },
+                    { id: 'mod_s6', name: 'Session 6', isCheckbox: true }
+                ]
+            }
+        ];
+
+        // Load modules structure from localStorage or use default
+        let modules = JSON.parse(localStorage.getItem('aqeel_modules_struct')) || defaultModules;
+        let savedState = JSON.parse(localStorage.getItem('aqeel_progress_v2')) || {};
+
+        function toggleAdminPanel() {
+            const panel = document.getElementById('admin-panel');
+            panel.classList.toggle('hidden');
+        }
+
+        function addNewSession() {
+            const modId = document.getElementById('admin-mod-id').value;
+            const sessionName = document.getElementById('admin-session-name').value.trim();
+            const maxVal = parseInt(document.getElementById('admin-session-max').value);
+
+            if (!sessionName) {
+                alert('يرجى إدخال اسم السشن!');
+                return;
+            }
+
+            const targetMod = modules.find(m => m.id === modId);
+            if (targetMod) {
+                const newId = `${modId}_custom_${Date.now()}`;
+                const newSession = {
+                    id: newId,
+                    name: sessionName,
+                    ...(maxVal === 0 ? { isCheckbox: true } : { max: maxVal })
+                };
+                targetMod.sessions.push(newSession);
+                localStorage.setItem('aqeel_modules_struct', JSON.stringify(modules));
+                renderModules();
+                toggleAdminPanel();
+                document.getElementById('admin-session-name').value = '';
+                alert('تمت إضافة السشن بنجاح!');
+            }
+        }
+
+        function resetToDefault() {
+            if (confirm('هل أنت متأكد من إعادة الضبط وحذف التعديلات المخصصة؟')) {
+                localStorage.removeItem('aqeel_modules_struct');
+                modules = JSON.parse(JSON.stringify(defaultModules));
+                renderModules();
+                toggleAdminPanel();
+            }
+        }
+
+        function renderModules() {
+            const container = document.getElementById('modules-container');
+            container.innerHTML = '';
+
+            modules.forEach(mod => {
+                let modTotal = 0;
+                let modCurrent = 0;
+
+                let sessionsHtml = mod.sessions.map(session => {
+                    if (session.isCheckbox) {
+                        modTotal += 1;
+                        const isChecked = savedState[session.id] ? true : false;
+                        if (isChecked) modCurrent += 1;
+
+                        return `
+                            <div class="flex justify-between items-center bg-slate-50 p-3 rounded-xl border border-slate-100 mb-2">
+                                <span class="font-bold text-slate-700 text-sm">${session.name}</span>
+                                <input type="checkbox" class="w-5 h-5 text-blue-600 rounded" ${isChecked ? 'checked' : ''} onchange="toggleCheckbox('${session.id}', this.checked)">
+                            </div>
+                        `;
+                    } else {
+                        const max = session.max || 1;
+                        modTotal += max;
+                        const val = savedState[session.id] || 0;
+                        modCurrent += val;
+
+                        return `
+                            <div class="flex justify-between items-center bg-slate-50 p-3 rounded-xl border border-slate-100 mb-2">
+                                <span class="font-bold text-slate-700 text-sm">${session.name} — ${val}/${max} ◀</span>
+                                <button onclick="incrementCounter('${session.id}', ${max})" class="bg-white border border-slate-200 px-3 py-1 rounded-lg text-sm font-bold shadow-sm active:bg-slate-100">
+                                    تغيير
+                                </button>
+                            </div>
+                        `;
+                    }
+                }).join('');
+
+                const modPercentage = modTotal > 0 ? Math.round((modCurrent / modTotal) * 100) : 0;
+
+                const modHtml = `
+                    <div class="border border-gray-200 rounded-xl overflow-hidden mb-3">
+                        <button class="w-full bg-white p-4 flex justify-between items-center text-[#0f2a4a] font-bold" onclick="toggleModule('${mod.id}')">
+                            <i class="fa-solid fa-caret-left transition-transform" id="icon-${mod.id}"></i>
+                            <span>${mod.name} — ${modPercentage}%</span>
+                        </button>
+                        <div id="content-${mod.id}" class="hidden p-4 bg-white border-t border-gray-100">
+                            ${sessionsHtml}
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += modHtml;
+            });
+
+            updateTotalProgress();
+        }
+
+        function toggleModule(id) {
+            const content = document.getElementById(`content-${id}`);
+            const icon = document.getElementById(`icon-${id}`);
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                icon.style.transform = 'rotate(-90deg)';
+            } else {
+                content.classList.add('hidden');
+                icon.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        function incrementCounter(id, max) {
+            let current = savedState[id] || 0;
+            current = (current + 1) > max ? 0 : current + 1;
+            savedState[id] = current;
+            markUnsaved();
+            renderModules();
+        }
+
+        function toggleCheckbox(id, isChecked) {
+            savedState[id] = isChecked;
+            markUnsaved();
+            renderModules();
+        }
+
+        function markUnsaved() {
+            const statusText = document.getElementById('save-status');
+            statusText.innerText = 'يوجد تغييرات غير محفوظة..';
+            statusText.className = 'text-xs text-orange-500 font-semibold';
+        }
+
+        function updateTotalProgress() {
+            let total = 0;
+            let current = 0;
+
+            modules.forEach(mod => {
+                mod.sessions.forEach(session => {
+                    if (session.isCheckbox) {
+                        total += 1;
+                        if (savedState[session.id]) current += 1;
+                    } else {
+                        const max = session.max || 1;
+                        total += max;
+                        current += (savedState[session.id] || 0);
+                    }
+                });
+            });
+
+            const percentage = total > 0 ? Math.round((current / total) * 100) : 0;
+            document.getElementById('total-text').innerText = `إنجازك الكلي: ${percentage}%`;
+            document.getElementById('total-progress').style.width = `${percentage}%`;
+        }
+
+        function saveProgress() {
+            localStorage.setItem('aqeel_progress_v2', JSON.stringify(savedState));
+            const statusText = document.getElementById('save-status');
+            statusText.innerText = 'تم الحفظ بنجاح ✓';
+            statusText.className = 'text-xs text-green-600 font-semibold';
+            
+            setTimeout(() => {
+                statusText.innerText = 'تقدمك محفوظ';
+                statusText.className = 'text-xs text-gray-500 font-semibold';
+            }, 3000);
+        }
+
+        renderModules();
+    </script>
+</body>
+</html>
 

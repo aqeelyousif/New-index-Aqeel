@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>موقع عقيل | تتبع الإنجاز</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f4f8; }
+        .sticky-bottom { position: fixed; bottom: 0; width: 100%; z-index: 50; }
+        .progress-bar { transition: width 0.3s ease; }
+    </style>
+</head>
+<body class="text-slate-800 pb-24">
+
+    <!-- Header / Navigation -->
+    <header class="bg-white shadow-sm p-4 flex justify-between items-center sticky top-0 z-50">
+        <div class="text-xl font-bold text-blue-600 flex items-center gap-2">
+            <i class="fa-solid fa-stethoscope"></i> عقيل
+        </div>
+        <nav class="flex gap-4 text-sm font-semibold text-gray-500 overflow-x-auto whitespace-nowrap">
+            <a href="#" class="hover:text-blue-600">الرئيسية</a>
+            <a href="#" class="hover:text-blue-600">ملخصات طبية</a>
+            <a href="#" class="hover:text-blue-600">مشاريع</a>
+            <a href="#" class="text-blue-600 border-b-2 border-blue-600 pb-1">الإنجاز</a>
+        </nav>
+        <button class="bg-blue-500 text-white px-4 py-1.5 rounded-full text-sm font-bold shadow-md">تواصل</button>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-2xl mx-auto mt-6 p-4">
+        
+        <!-- Tabs -->
+        <div class="flex justify-between bg-white rounded-xl shadow-sm mb-6 p-1">
+            <button class="flex-1 py-2 text-center text-sm font-bold rounded-lg text-gray-500">الفعاليات</button>
+            <button class="flex-1 py-2 text-center text-sm font-bold rounded-lg text-gray-500">الفورمات</button>
+            <button class="flex-1 py-2 text-center text-sm font-bold rounded-lg bg-[#0f2a4a] text-white shadow">الامتحانات</button>
+            <button class="flex-1 py-2 text-center text-sm font-bold rounded-lg text-gray-500">الروابط</button>
+        </div>
+
+        <!-- Tracker Card -->
+        <div class="bg-white rounded-2xl shadow-sm p-5 mb-6 border border-gray-100">
+            <div class="flex justify-between items-center mb-4">
+                <span class="text-blue-500"><i class="fa-solid fa-book-medical"></i></span>
+                <h2 class="text-lg font-bold text-slate-700">Summative Exam</h2>
+                <span class="text-gray-400 text-sm"><i class="fa-regular fa-calendar"></i> 12/11/2026</span>
+            </div>
+
+            <!-- Total Progress -->
+            <div class="bg-slate-50 p-4 rounded-xl mb-6">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="font-bold text-slate-700" id="total-text">إنجازك الكلي: 0%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                    <div id="total-progress" class="bg-blue-500 h-2.5 rounded-full progress-bar" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Modules Accordion -->
+            <div id="modules-container" class="space-y-3">
+                <!-- Modules will be injected by JS -->
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Sticky Save Button -->
+    <div class="sticky-bottom bg-white border-t border-gray-100 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+        <div class="max-w-2xl mx-auto flex flex-col items-center gap-2">
+            <span id="save-status" class="text-xs text-gray-500 font-semibold">تقدمك محفوظ</span>
+            <button onclick="saveProgress()" class="w-full bg-slate-400 hover:bg-slate-500 text-white font-bold py-3 rounded-xl flex justify-center items-center gap-2 transition-colors">
+                <i class="fa-solid fa-floppy-disk"></i> حفظ تقدمي
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Data Structure
+        const modules = [
+            {
+                id: 'msk',
+                name: 'MSK',
+                sessions: [
+                    { id: 'msk_s1', name: 'Session 1', parts: ['جزء 1', 'جزء 2'] },
+                    { id: 'msk_s2', name: 'Session 2', parts: ['جزء 1', 'جزء 2', 'لاب'] },
+                    { id: 'msk_s3', name: 'Session 3', parts: ['جزء 1', 'جزء 2'] }
+                ]
+            },
+            {
+                id: 'cvs',
+                name: 'CVS',
+                sessions: [
+                    { id: 'cvs_s1', name: 'Session 1', parts: ['محاضرة 1'] },
+                    { id: 'cvs_s2', name: 'Session 2', parts: ['محاضرة 1', 'محاضرة 2'] }
+                ]
+            },
+            {
+                id: 'mnr',
+                name: 'M&R',
+                sessions: [
+                    { id: 'mnr_s1', name: 'Session 1', parts: ['محاضرة 1', 'محاضرة 2'] }
+                ]
+            },
+            {
+                id: 'mod',
+                name: 'MOD',
+                sessions: [
+                    { id: 'mod_s1', name: 'Session 1', parts: ['محاضرة 1', 'محاضرة 2'] }
+                ]
+            }
+        ];
+
+        // Load saved state or init empty
+        let savedState = JSON.parse(localStorage.getItem('aqeel_progress')) || {};
+
+        function renderModules() {
+            const container = document.getElementById('modules-container');
+            container.innerHTML = '';
+
+            modules.forEach(mod => {
+                let modTotalParts = 0;
+                let modCompletedParts = 0;
+
+                let sessionsHtml = mod.sessions.map(session => {
+                    let partsHtml = session.parts.map((part, index) => {
+                        const partId = `${session.id}_p${index}`;
+                        const isChecked = savedState[partId] ? 'checked' : '';
+                        modTotalParts++;
+                        if (isChecked) modCompletedParts++;
+
+                        return `
+                            <label class="flex items-center gap-2 cursor-pointer bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
+                                <span class="text-sm font-semibold text-slate-600">${part}</span>
+                                <input type="checkbox" class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500" 
+                                       id="${partId}" ${isChecked} onchange="updateProgress('${partId}', this.checked)">
+                            </label>
+                        `;
+                    }).join('');
+
+                    return `
+                        <div class="border border-slate-100 rounded-xl p-3 mb-2">
+                            <div class="flex justify-between items-center mb-3">
+                                <span class="font-bold text-slate-700 text-sm">${session.name}</span>
+                            </div>
+                            <div class="flex flex-wrap gap-2 justify-end dir-ltr">
+                                ${partsHtml}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                const modPercentage = modTotalParts > 0 ? Math.round((modCompletedParts / modTotalParts) * 100) : 0;
+
+                const modHtml = `
+                    <div class="border border-gray-200 rounded-xl overflow-hidden mb-3">
+                        <button class="w-full bg-white p-4 flex justify-between items-center text-[#0f2a4a] font-bold" onclick="toggleModule('${mod.id}')">
+                            <i class="fa-solid fa-caret-left transition-transform" id="icon-${mod.id}"></i>
+                            <span id="text-${mod.id}">${mod.name} — ${modPercentage}%</span>
+                        </button>
+                        <div id="content-${mod.id}" class="hidden p-4 bg-white border-t border-gray-100">
+                            ${sessionsHtml}
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += modHtml;
+            });
+
+            updateTotalProgress();
+        }
+
+        function toggleModule(id) {
+            const content = document.getElementById(`content-${id}`);
+            const icon = document.getElementById(`icon-${id}`);
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                icon.style.transform = 'rotate(-90deg)';
+            } else {
+                content.classList.add('hidden');
+                icon.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        function updateProgress(partId, isChecked) {
+            savedState[partId] = isChecked;
+            document.getElementById('save-status').innerText = 'يوجد تغييرات غير محفوظة..';
+            document.getElementById('save-status').classList.replace('text-gray-500', 'text-orange-500');
+            renderModules(); // Re-render to update percentages
+        }
+
+        function updateTotalProgress() {
+            let total = 0;
+            let completed = 0;
+
+            modules.forEach(mod => {
+                mod.sessions.forEach(session => {
+                    session.parts.forEach((part, index) => {
+                        total++;
+                        if (savedState[`${session.id}_p${index}`]) completed++;
+                    });
+                });
+            });
+
+            const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+            document.getElementById('total-text').innerText = `إنجازك الكلي: ${percentage}%`;
+            document.getElementById('total-progress').style.width = `${percentage}%`;
+        }
+
+        function saveProgress() {
+            localStorage.setItem('aqeel_progress', JSON.stringify(savedState));
+            const statusText = document.getElementById('save-status');
+            statusText.innerText = 'تم الحفظ بنجاح ✓';
+            statusText.classList.replace('text-orange-500', 'text-green-600');
+            
+            // Revert back to gray after 3 seconds
+            setTimeout(() => {
+                statusText.innerText = 'تقدمك محفوظ';
+                statusText.classList.replace('text-green-600', 'text-gray-500');
+            }, 3000);
+        }
+
+        // Initialize on load
+        renderModules();
+    </script>
+</body>
+</html>

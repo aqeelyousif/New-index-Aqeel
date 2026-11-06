@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>موقع عقيل | تتبع الإنجاز الطبي</title>
-    <link rel="manifest" href="manifest.json?v=5">
+    <link rel="manifest" href="manifest.json?v=6">
     <link rel="icon" href="1793985365125.jpg" type="image/jpeg">
     <meta name="theme-color" content="#2563eb">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -171,8 +171,8 @@
         }
     ];
 
-    let modules = JSON.parse(localStorage.getItem('aqeel_modules_struct_v5')) || defaultModules;
-    let savedState = JSON.parse(localStorage.getItem('aqeel_progress_v5')) || {};
+    let modules = JSON.parse(localStorage.getItem('aqeel_modules_struct_v6')) || defaultModules;
+    let savedState = JSON.parse(localStorage.getItem('aqeel_progress_v6')) || {};
 
     function toggleAdminPanel() {
         const panel = document.getElementById('admin-panel');
@@ -180,11 +180,11 @@
     }
 
     function checkAdminPassword() {
-        let isAuth = localStorage.getItem('my_secure_admin_v5') === 'true';
+        let isAuth = localStorage.getItem('my_secure_admin_v6') === 'true';
         if (!isAuth) {
             let pass = prompt("أدخل الرمز السري الخاص بك:");
             if (pass === '427002') {
-                localStorage.setItem('my_secure_admin_v5', 'true');
+                localStorage.setItem('my_secure_admin_v6', 'true');
                 alert('أهلاً بك يا دكتور، تم فتح لوحة التحكم بنجاح!');
                 toggleAdminPanel();
             } else {
@@ -216,7 +216,7 @@
                 parts: partsArray
             };
             targetMod.sessions.push(newSession);
-            localStorage.setItem('aqeel_modules_struct_v5', JSON.stringify(modules));
+            localStorage.setItem('aqeel_modules_struct_v6', JSON.stringify(modules));
             renderModules();
             toggleAdminPanel();
             document.getElementById('admin-session-name').value = '';
@@ -227,7 +227,7 @@
 
     function resetToDefault() {
         if (confirm('هل أنت متأكد من إعادة الضبط للافتراضي؟')) {
-            localStorage.removeItem('aqeel_modules_struct_v5');
+            localStorage.removeItem('aqeel_modules_struct_v6');
             modules = JSON.parse(JSON.stringify(defaultModules));
             renderModules();
             toggleAdminPanel();
@@ -338,7 +338,7 @@
     }
 
     function saveProgress() {
-        localStorage.setItem('aqeel_progress_v5', JSON.stringify(savedState));
+        localStorage.setItem('aqeel_progress_v6', JSON.stringify(savedState));
         const statusText = document.getElementById('save-status');
         statusText.innerText = 'تم الحفظ بنجاح ✓';
         statusText.className = 'text-xs text-emerald-600 font-black';
